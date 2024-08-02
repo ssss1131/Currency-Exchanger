@@ -1,10 +1,11 @@
 package com.ssss.dao;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface Dao<E> {
     List<E> findAll();
 
-    E save(E entity);
+    Optional<E> save(E entity);
 
 }
