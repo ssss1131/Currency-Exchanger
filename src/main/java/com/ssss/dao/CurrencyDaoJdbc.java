@@ -6,16 +6,17 @@ import com.ssss.util.ConnectionManager;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 
-public class CurrencyDao implements Dao<Currency> {
-    private static final CurrencyDao INSTANCE = new CurrencyDao();
+public class CurrencyDaoJdbc implements Dao<Currency> {
+    private static final CurrencyDaoJdbc INSTANCE = new CurrencyDaoJdbc();
 
-    private CurrencyDao() {
+    private CurrencyDaoJdbc() {
     }
 
-    public static CurrencyDao getInstance() {
+    public static CurrencyDaoJdbc getInstance() {
         return INSTANCE;
     }
 
@@ -50,17 +51,17 @@ public class CurrencyDao implements Dao<Currency> {
     }
 
     @Override
-    public Currency save(Currency currency) {
+    public Optional<Currency> save(Currency currency) {
         try (Connection connection = ConnectionManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(SAVE_SQL, RETURN_GENERATED_KEYS)) {
             statement.setString(1, currency.getCode());
-            statement.setString(2, currency.getFullName());
+            statement.setString(2, currency.getName());
             statement.setString(3, currency.getSign());
             statement.executeUpdate();
             ResultSet generatedKeys = statement.getGeneratedKeys();
             generatedKeys.next();
             currency.setId(generatedKeys.getInt(1));
-            return currency;
+            return Optional.of(currency);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -70,7 +71,7 @@ public class CurrencyDao implements Dao<Currency> {
         return Currency.builder()
                 .id(resultSet.getInt("ID"))
                 .code(resultSet.getString("Code"))
-                .fullName(resultSet.getString("FullName"))
+                .name(resultSet.getString("FullName"))
                 .sign(resultSet.getString("Sign"))
                 .build();
     }
