@@ -25,12 +25,13 @@ public class CurrencyDaoJdbc implements Dao<Currency> {
                            Code,
                            FullName,
                            Sign
-                    FROM Currencies;
+                    FROM Currencies
             """;
     private static final String SAVE_SQL = """
             INSERT INTO Currencies(Code,FullName,Sign)
             VALUES (?,?,?);
             """;
+    private static final String FIND_BY_CODE_SQL = FIND_ALL_SQL + "WHERE Code = ?";
 
     @Override
     public List<Currency> findAll() {
@@ -62,6 +63,22 @@ public class CurrencyDaoJdbc implements Dao<Currency> {
             generatedKeys.next();
             currency.setId(generatedKeys.getInt(1));
             return Optional.of(currency);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Optional<Currency> findByCode(String code) {
+        try(Connection connection = ConnectionManager.getConnection();
+        PreparedStatement statement = connection.prepareStatement(FIND_BY_CODE_SQL)) {
+            statement.setString(1, code);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                Currency currency = buildCurrency(resultSet);
+                return Optional.of(currency);
+            }
+            return Optional.empty();
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
