@@ -1,7 +1,6 @@
 package com.ssss.servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ssss.dao.ExchangeRateDaoJdbc;
 import com.ssss.model.ExchangeRate;
 import com.ssss.service.ExchangeRateService;
 import jakarta.servlet.ServletException;
@@ -12,7 +11,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Map;
 import java.util.Optional;
 
 import static jakarta.servlet.http.HttpServletResponse.*;
@@ -56,7 +54,7 @@ public class ExchangeRateServlet extends HttpServlet {
 //         create exceptions for several situations and transfer all exceptions to servlets
 
         String pathInfo = req.getPathInfo();
-        Optional<ExchangeRate> exchangeRate = exchangeRateService.getExchangeRate(pathInfo);
+        Optional<ExchangeRate> exchangeRate = exchangeRateService.getExchangeRateFromPath(pathInfo);
         if (exchangeRate.isPresent()) {
             resp.setContentType("application/json");
             mapper.writeValue(resp.getWriter(), exchangeRate.get());

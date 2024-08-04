@@ -20,11 +20,15 @@ public class ExchangeRateService {
         return INSTANCE;
     }
 
-    public Optional<ExchangeRate> getExchangeRate(String pathInfo) {
+    public Optional<ExchangeRate> getExchangeRateFromPath(String pathInfo) {
         List<String> codes = getCodesFromPath(pathInfo);
         String baseCode = codes.get(0);
         String targetCode = codes.get(1);
+        return dao.findByCodes(baseCode, targetCode);
+    }
 
+    public Optional<ExchangeRate> getExchangeRate(String baseCode, String targetCode) {
+        //TODO тут не надо исключение она нужна как опшенол
         return dao.findByCodes(baseCode, targetCode);
     }
 
@@ -33,6 +37,7 @@ public class ExchangeRateService {
         List<String> codes = getCodesFromPath(pathInfo);
         String baseCode = codes.get(0);
         String targetCode = codes.get(1);
+        //TODO надо короч тут сразу бросать исключение а не кидать мусор дальше вверх
         return dao.updateByCodes(baseCode, targetCode, newRate);
     }
 
