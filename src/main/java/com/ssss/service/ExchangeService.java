@@ -2,13 +2,15 @@ package com.ssss.service;
 
 import com.ssss.dto.ExchangeDto;
 import com.ssss.dto.ExchangedCurrenciesDto;
-import com.ssss.exception.CurrencyConversionException;
+import com.ssss.exception.NotExistException;
 import com.ssss.model.Currency;
 import com.ssss.model.ExchangeRate;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.Optional;
+
+import static java.math.RoundingMode.HALF_UP;
 
 public class ExchangeService {
 
@@ -41,14 +43,14 @@ public class ExchangeService {
 
     private ExchangedCurrenciesDto forwardExchange(ExchangeDto exchangeDto, ExchangeRate exchangeRate, Currency currencyBase, Currency currencyTarget) {
         BigDecimal rate = exchangeRate.getRate();
-        BigDecimal amount = exchangeDto.getAmount();
+        BigDecimal amount = new BigDecimal(exchangeDto.getAmount());
         BigDecimal convertedAmount = amount.multiply(rate);
         return buildDto(currencyBase, currencyTarget, rate, amount, convertedAmount);
     }
 
     private ExchangedCurrenciesDto backwardExchange(ExchangeDto exchangeDto, ExchangeRate exchangeRateBackward, Currency currencyBase, Currency currencyTarget) {
         BigDecimal rate = exchangeRateBackward.getRate();
-        BigDecimal amount = exchangeDto.getAmount();
+        BigDecimal amount = new BigDecimal(exchangeDto.getAmount());
         BigDecimal convertedAmount = amount.divide(rate, MathContext.DECIMAL32);
         return buildDto(currencyBase, currencyTarget, rate, amount, convertedAmount);
     }
@@ -59,12 +61,12 @@ public class ExchangeService {
         if (exchangeRateFrom.isPresent() && exchangeRateTo.isPresent()) {
             BigDecimal rateFrom = exchangeRateFrom.get().getRate();
             BigDecimal rateTo = exchangeRateTo.get().getRate();
-            BigDecimal rate = rateFrom.divide(rateTo, MathContext.DECIMAL32);
-            BigDecimal amount = exchangeDto.getAmount();
+            BigDecimal rate = rateTo.divide(rateFrom, MathContext.DECIMAL32);
+            BigDecimal amount = new BigDecimal(exchangeDto.getAmount());
             BigDecimal convertedAmount = amount.multiply(rate);
             return buildDto(currencyBase, currencyTarget, rate, amount, convertedAmount);
         }
-        throw new CurrencyConversionException("No exchange rate available for the given currencies");
+        throw new NotExistException("No exchange rate available for the given currencies");
     }
 
 
@@ -74,7 +76,7 @@ public class ExchangeService {
                 .targetCurrency(currencyTarget)
                 .rate(rate)
                 .amount(amount)
-                .convertedAmount(convertedAmount)
+                .convertedAmount(convertedAmount.setScale(2, HALF_UP))
                 .build();
     }
 

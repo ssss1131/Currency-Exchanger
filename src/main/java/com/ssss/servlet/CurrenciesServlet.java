@@ -1,9 +1,9 @@
 package com.ssss.servlet;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ssss.dao.CurrencyDaoJdbc;
 import com.ssss.model.Currency;
 import com.ssss.service.CurrencyService;
+import com.ssss.util.ValidationUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -12,7 +12,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 import static jakarta.servlet.http.HttpServletResponse.*;
 
@@ -38,15 +37,11 @@ public class CurrenciesServlet extends HttpServlet {
                 .code(req.getParameter("code"))
                 .sign(req.getParameter("sign"))
                 .build();
-        try{
-            Currency savedCurrency = currencyService.save(currency);
-            resp.setContentType("application/json");
-            resp.setCharacterEncoding("UTF-8");
-            mapper.writeValue(resp.getWriter(), savedCurrency);
-            resp.setStatus(SC_CREATED);
-        }catch(IllegalArgumentException e){
-            resp.sendError(SC_BAD_REQUEST, e.getMessage());
-        }
+        ValidationUtils.validateNewCurrency(currency);
+
+        Currency savedCurrency = currencyService.save(currency);
+        mapper.writeValue(resp.getWriter(), savedCurrency);
+        resp.setStatus(SC_CREATED);
     }
 }
 
