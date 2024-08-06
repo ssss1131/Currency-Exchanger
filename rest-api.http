@@ -1,0 +1,168 @@
+#GET /currencies
+GET localhost:8080/currencies
+Accept: application/json
+
+
+#GET /currency/EUR
+
+###Not exist currency
+GET localhost:8080/currency/ASD
+Accept: application/json
+
+
+###missing code
+GET localhost:8080/currency/
+Accept: application/json
+
+
+###correct
+GET localhost:8080/currency/EUR
+Accept: application/json
+
+
+#POST /currencies
+
+###missing field
+POST localhost:8080/currencies
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+name=nice one&
+code=NIO
+
+
+###already exist
+POST localhost:8080/currencies
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+name=United States Dollar&
+code=USD&
+sign=$
+
+
+###correct
+POST localhost:8080/currencies
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+name=nice one&
+code=NIO&
+sign=no
+
+
+#GET /exchangeRates
+
+###correct
+GET localhost:8080/exchangeRates
+Accept: application/json
+
+
+#GET /exchangeRate/USDRUB
+
+###invalid currencies
+GET localhost:8080/exchangeRate/su
+Accept: application/json
+
+
+###Not exist exch rate
+GET localhost:8080/exchangeRate/SUUUUU
+Accept: application/json
+
+
+###correct
+GET localhost:8080/exchangeRate/USDRUB
+Accept: application/json
+
+
+#POST /exchangeRates
+
+###not exist currency
+POST localhost:8080/exchangeRates
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+baseCurrencyCode=USD&
+targetCurrencyCode=AAA&
+rate=0.99
+
+
+###already exist exch rate
+POST localhost:8080/exchangeRates
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+baseCurrencyCode=USD&
+targetCurrencyCode=RUB&
+rate=0.99
+
+
+###missing field
+POST localhost:8080/exchangeRates
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+baseCurrencyCode=USD&
+targetCurrencyCode=JPY
+
+
+###correct
+POST localhost:8080/exchangeRates
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+baseCurrencyCode=USD&
+targetCurrencyCode=JPY&
+rate=0.99
+
+
+#PATCH /exchangeRate/USDRUB
+
+###not exist exch rate
+PATCH http://localhost:8080/exchangeRate/USDRUA
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+rate=12
+
+
+###missing field rate
+PATCH http://localhost:8080/exchangeRate/USDRUB
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+
+###correct
+PATCH http://localhost:8080/exchangeRate/USDRUB
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+rate=12
+
+
+# /exchange?from=BASE_CURRENCY_CODE&to=TARGET_CURRENCY_CODE&amount=$AMOUNT
+
+###invalid  param name
+GET localhost:8080/exchange?frim=USD&ta=RUB&amount=10
+Accept: application/json
+
+
+###invalid cuurency
+GET localhost:8080/exchange?from=SUUU&to=RUB&amount=10
+Accept: application/json
+
+
+###invalid amount
+GET localhost:8080/exchange?from=USD&to=RUB&amount=f
+Accept: application/json
+
+
+###not exist currency exch
+GET localhost:8080/exchange?from=USD&to=BSD&amount=10
+Accept: application/json
+
+
+###exist currency exch
+GET http://localhost:8080/exchange?from=USD&to=RUB&amount=10
+Accept: application/json
+
