@@ -13,5 +13,6 @@ public class ExchangeDto {
 
     String to;
 
-    BigDecimal amount;
+    String amount;
+
 }

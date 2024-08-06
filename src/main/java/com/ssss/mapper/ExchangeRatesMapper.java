@@ -5,6 +5,8 @@ import com.ssss.model.Currency;
 import com.ssss.model.ExchangeRate;
 import com.ssss.service.CurrencyService;
 
+import java.math.BigDecimal;
+
 public class ExchangeRatesMapper implements Mapper<ExchangeRatesDto, ExchangeRate>{
 
     private static final ExchangeRatesMapper INSTANCE = new ExchangeRatesMapper();
@@ -17,12 +19,11 @@ public class ExchangeRatesMapper implements Mapper<ExchangeRatesDto, ExchangeRat
     public ExchangeRate mapFrom(ExchangeRatesDto dto) {
         Currency baseCurrency = currencyService.getCurrencyByCode(dto.getBaseCurrencyCode());
         Currency targetCurrency = currencyService.getCurrencyByCode(dto.getTargetCurrencyCode());
-        ExchangeRate exchangeRate = ExchangeRate.builder()
+        return ExchangeRate.builder()
                 .baseCurrency(baseCurrency)
                 .targetCurrency(targetCurrency)
-                .rate(dto.getRate())
+                .rate(new BigDecimal(dto.getRate()))
                 .build();
-        return exchangeRate;
     }
 
 }
