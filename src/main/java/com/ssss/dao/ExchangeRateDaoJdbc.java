@@ -1,35 +1,38 @@
 package com.ssss.dao;
 
+import com.ssss.exception.AlreadyExistsException;
+import com.ssss.exception.DatabaseUnavailableException;
 import com.ssss.model.Currency;
 import com.ssss.model.ExchangeRate;
 import com.ssss.util.ConnectionManager;
+import org.sqlite.SQLiteErrorCode;
+import org.sqlite.SQLiteException;
 
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class ExchangeRateDaoJdbc implements Dao<ExchangeRate> {
+import static java.sql.Statement.*;
+
+public class ExchangeRateDaoJdbc implements ExchangeRateDao {
 
     private static final ExchangeRateDaoJdbc INSTANCE = new ExchangeRateDaoJdbc();
 
     private static final String FIND_ALL_SQL = """
                   SELECT exr.ID AS ExchangeRateId,
-                        
+            
                           base.ID AS BaseCurrencyId,
                    base.Code AS BaseCurrencyCode,
                    base.FullName AS BaseCurrencyName,
                    base.Sign AS BaseCurrencySign,
-                        
+            
                    target.ID AS TargetCurrencyId,
                    target.Code AS TargetCurrencyCode,
                    target.FullName AS TargetCurrencyName,
                    target.Sign AS TargetCurrencySign,
-                        
+            
                    exr.Rate AS ExchangeRate
                    FROM ExchangeRates exr
             JOIN Currencies base ON exr.BaseCurrencyId = base.ID
@@ -59,7 +62,7 @@ public class ExchangeRateDaoJdbc implements Dao<ExchangeRate> {
     private ExchangeRateDaoJdbc() {
     }
 
-    public static ExchangeRateDaoJdbc getInstance() {
+    public static ExchangeRateDao getInstance() {
         return INSTANCE;
     }
 
@@ -77,22 +80,32 @@ public class ExchangeRateDaoJdbc implements Dao<ExchangeRate> {
             return exchangeRates;
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new DatabaseUnavailableException("The database is currently unavailable. Please try again later.");
         }
     }
 
     @Override
-    public Optional<ExchangeRate> save(ExchangeRate entity) {
+    public ExchangeRate save(ExchangeRate entity) {
         try (Connection connection = ConnectionManager.getConnection();
-             PreparedStatement statement = connection.prepareStatement(SAVE_SQL)) {
+             PreparedStatement statement = connection.prepareStatement(SAVE_SQL, RETURN_GENERATED_KEYS)) {
             statement.setInt(1, entity.getBaseCurrency().getId());
             statement.setInt(2, entity.getTargetCurrency().getId());
             statement.setBigDecimal(3, entity.getRate());
             statement.executeUpdate();
-            return findByCodes(entity.getBaseCurrency().getCode(), entity.getTargetCurrency().getCode());
-
+            ResultSet generatedKeys = statement.getGeneratedKeys();
+            generatedKeys.next();
+            entity.setId(generatedKeys.getInt(1));
+            return entity;
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            if (e instanceof SQLiteException) {
+                SQLiteException exception = (SQLiteException) e;
+                if (exception.getResultCode().code == SQLiteErrorCode.SQLITE_CONSTRAINT_UNIQUE.code) {
+                    throw new AlreadyExistsException("Exchange rate with codes " +
+                                                     entity.getBaseCurrency().getCode() + "-" + entity.getTargetCurrency().getCode() +
+                                                     " already exists");
+                }
+            }
+            throw new DatabaseUnavailableException("The database is currently unavailable. Please try again later.");
         }
     }
 
@@ -104,26 +117,24 @@ public class ExchangeRateDaoJdbc implements Dao<ExchangeRate> {
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
                 return Optional.of(buildExchangeRate(resultSet));
-            } else {
-                return Optional.empty();
             }
-
+            return Optional.empty();
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new DatabaseUnavailableException("The database is currently unavailable. Please try again later.");
         }
     }
 
-    public Optional<ExchangeRate> updateByCodes(String baseCode, String targetCode, BigDecimal newRate) {
-        try(Connection connection = ConnectionManager.getConnection();
-        PreparedStatement statement = connection.prepareStatement(UPDATE_SQL)) {
+    public ExchangeRate updateByCodes(String baseCode, String targetCode, BigDecimal newRate) {
+        try (Connection connection = ConnectionManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(UPDATE_SQL)) {
             statement.setBigDecimal(1, newRate);
             statement.setString(2, baseCode);
             statement.setString(3, targetCode);
             statement.executeUpdate();
-            return findByCodes(baseCode, targetCode);
+            return findByCodes(baseCode, targetCode).get();
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new DatabaseUnavailableException("The database is currently unavailable. Please try again later.");
         }
     }
 
